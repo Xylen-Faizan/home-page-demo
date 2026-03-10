@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Incognoir — AI Behavioral Cybersecurity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg-void:       #020408;
+    --bg-deep:       #050c14;
+    --bg-card:       #080f1a;
+    --bg-surface:    #0c1624;
+    --border:        rgba(0,180,255,0.10);
+    --border-bright: rgba(0,180,255,0.28);
+    --accent-cyan:   #00b4ff;
+    --accent-teal:   #00ffd5;
+    --accent-red:    #ff3a5c;
+    --accent-amber:  #ffb340;
+    --text-primary:  #e8f4ff;
+    --text-secondary:#7aa0bc;
+    --text-muted:    #3d607a;
+    --font-display:  'Syne', sans-serif;
+    --font-mono:     'DM Mono', monospace;
+    --font-body:     'Inter', sans-serif;
+    --glow-cyan: 0 0 40px rgba(0,180,255,0.18), 0 0 80px rgba(0,180,255,0.06);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── NEURAL CANVAS ─── */
+  #neural-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .canvas-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, transparent 0%, var(--bg-void) 70%),
+                linear-gradient(to bottom, transparent 0%, var(--bg-void) 100%);
+    pointer-events: none;
+  }
+
+  /* ─── LAYOUT ─── */
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 2;
+  }
+
+  section { position: relative; z-index: 2; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 32px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(2,4,8,0.72);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.3s;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .nav-logo-mark {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--accent-cyan);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow-cyan);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-logo-mark::before {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-cyan);
+  }
+
+  .nav-logo-text {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text-primary); }
+
+  .nav-cta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-ghost {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: color 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-ghost:hover { color: var(--text-primary); }
+
+  .btn-primary {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bg-void);
+    background: var(--accent-cyan);
+    border: none;
+    border-radius: 6px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 24px rgba(0,180,255,0.45);
+    transform: translateY(-1px);
+  }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 120px 0 100px;
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,180,255,0.08);
+    border: 1px solid rgba(0,180,255,0.22);
+    border-radius: 100px;
+    padding: 5px 14px 5px 8px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .hero-badge-dot {
+    width: 7px; height: 7px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-cyan);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .hero-badge span {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-headline {
+    font-family: var(--font-display);
+    font-size: clamp(38px, 5vw, 58px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .hero-headline em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent-cyan) 0%, var(--accent-teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text-secondary);
+    max-width: 460px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+    font-weight: 300;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+
+  .btn-lg {
+    font-size: 14px;
+    padding: 13px 28px;
+    border-radius: 8px;
+  }
+
+  .btn-outline {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-outline:hover {
+    color: var(--text-primary);
+    border-color: rgba(0,180,255,0.5);
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 48px;
+    animation: fadeUp 0.7s 0.4s ease both;
+  }
+
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hero-meta-item svg {
+    color: var(--accent-teal);
+    flex-shrink: 0;
+  }
+
+  .hero-meta-item span {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* ─── BRAIN VISUAL ─── */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .brain-orb {
+    width: 380px;
+    height: 380px;
+    position: relative;
+  }
+
+  .brain-orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    animation: spin linear infinite;
+  }
+
+  .ring-1 {
+    inset: 0;
+    border-color: rgba(0,180,255,0.15);
+    animation-duration: 30s;
+  }
+
+  .ring-2 {
+    inset: 30px;
+    border-color: rgba(0,255,213,0.1);
+    animation-duration: 22s;
+    animation-direction: reverse;
+  }
+
+  .ring-3 {
+    inset: 60px;
+    border-color: rgba(0,180,255,0.08);
+    animation-duration: 16s;
+  }
+
+  .brain-orb-core {
+    position: absolute;
+    inset: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,180,255,0.12) 0%, rgba(0,180,255,0.03) 60%, transparent 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 80px rgba(0,180,255,0.08), inset 0 0 40px rgba(0,180,255,0.06);
+  }
+
+  .brain-svg-wrap {
+    width: 160px;
+    height: 160px;
+    opacity: 0.85;
+  }
+
+  .orbit-dot {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-cyan);
+  }
+
+  .orbit-dot-1 { top: 20px; left: 50%; transform: translateX(-50%); animation: orbitDot1 30s linear infinite; }
+  .orbit-dot-2 { top: 50%; right: 12px; transform: translateY(-50%); animation: orbitDot2 22s linear infinite; }
+  .orbit-dot-3 { bottom: 40px; left: 25%; animation: orbitDot3 16s linear infinite; }
+
+  .threat-tag {
+    position: absolute;
+    background: rgba(255,58,92,0.12);
+    border: 1px solid rgba(255,58,92,0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-red);
+    letter-spacing: 0.05em;
+    animation: floatTag 4s ease-in-out infinite alternate;
+  }
+
+  .threat-tag-1 { top: 40px; right: -10px; animation-delay: 0s; }
+  .threat-tag-2 { bottom: 80px; left: -20px; animation-delay: 1.5s; }
+  .threat-tag-3 { top: 120px; right: -30px; animation-delay: 0.8s; color: var(--accent-teal); border-color: rgba(0,255,213,0.3); background: rgba(0,255,213,0.08); }
+
+  /* ─── SECTION SHARED ─── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent-cyan);
+    opacity: 0.6;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.5vw, 42px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.12;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 560px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    margin: 0;
+  }
+
+  /* ─── PROBLEM ─── */
+  #problem {
+    padding: 100px 0;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+    margin-top: 64px;
+  }
+
+  .problem-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .problem-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: border-color 0.3s, transform 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,58,92,0.4), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .problem-card:hover {
+    border-color: rgba(255,58,92,0.25);
+    transform: translateX(4px);
+  }
+
+  .problem-card:hover::before { opacity: 1; }
+
+  .problem-icon {
+    width: 36px; height: 36px;
+    background: rgba(255,58,92,0.1);
+    border: 1px solid rgba(255,58,92,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent-red);
+    font-size: 16px;
+  }
+
+  .problem-card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .problem-card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .trajectory-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trajectory-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 100%, rgba(0,180,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .trajectory-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .threat-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 44px;
+    width: 1px;
+    height: 24px;
+    background: linear-gradient(to bottom, var(--border-bright), transparent);
+  }
+
+  .flow-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    flex-shrink: 0;
+    border: 1px solid;
+  }
+
+  .flow-dot-normal { background: rgba(0,180,255,0.08); border-color: rgba(0,180,255,0.25); color: var(--accent-cyan); }
+  .flow-dot-warn   { background: rgba(255,179,64,0.08); border-color: rgba(255,179,64,0.25); color: var(--accent-amber); }
+  .flow-dot-alert  { background: rgba(255,58,92,0.08); border-color: rgba(255,58,92,0.3); color: var(--accent-red); }
+  .flow-dot-ok     { background: rgba(0,255,213,0.08); border-color: rgba(0,255,213,0.25); color: var(--accent-teal); }
+
+  .flow-label {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .flow-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .flow-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 100px;
+  }
+
+  .badge-up { background: rgba(255,179,64,0.12); color: var(--accent-amber); border: 1px solid rgba(255,179,64,0.2); }
+  .badge-break { background: rgba(255,58,92,0.12); color: var(--accent-red); border: 1px solid rgba(255,58,92,0.2); }
+  .badge-ok { background: rgba(0,255,213,0.1); color: var(--accent-teal); border: 1px solid rgba(0,255,213,0.2); }
+  .badge-monitor { background: rgba(0,180,255,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,180,255,0.2); }
+
+  /* ─── ARCHITECTURE ─── */
+  #architecture {
+    padding: 100px 0;
+  }
+
+  .arch-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: end;
+    margin-bottom: 60px;
+  }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .arch-cell {
+    background: var(--bg-card);
+    padding: 28px 24px;
+    transition: background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch-cell:hover { background: var(--bg-surface); }
+
+  .arch-cell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
+    transform: scaleX(0);
+    transition: transform 0.3s;
+    transform-origin: left;
+  }
+
+  .arch-cell:hover::before { transform: scaleX(1); }
+
+  .arch-cell-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+
+  .arch-cell-icon {
+    width: 40px; height: 40px;
+    background: rgba(0,180,255,0.08);
+    border: 1px solid rgba(0,180,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    color: var(--accent-cyan);
+  }
+
+  .arch-cell-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .arch-cell-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .arch-flow-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 40px 0 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .arch-flow-step {
+    flex: 1;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+  }
+
+  .arch-flow-step:not(:last-child)::after {
+    content: '›';
+    position: absolute;
+    right: -8px;
+    color: var(--text-muted);
+    font-size: 18px;
+    z-index: 1;
+  }
+
+  .arch-flow-step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+    flex-shrink: 0;
+  }
+
+  .arch-flow-step-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── CAPABILITIES ─── */
+  #capabilities {
+    padding: 100px 0;
+  }
+
+  .cap-header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .cap-header .section-label { justify-content: center; }
+  .cap-header .section-label::before { display: none; }
+  .cap-header .section-desc { margin: 0 auto; text-align: center; }
+
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .cap-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 28px;
+    display: flex;
+    gap: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cap-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 0%, rgba(0,180,255,0.04) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .cap-card:hover {
+    border-color: var(--border-bright);
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+
+  .cap-card:hover::after { opacity: 1; }
+
+  .cap-card-icon {
+    width: 44px; height: 44px;
+    background: rgba(0,180,255,0.08);
+    border: 1px solid rgba(0,180,255,0.18);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent-cyan);
+  }
+
+  .cap-card-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .cap-card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  .cap-card-tag {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-teal);
+    background: rgba(0,255,213,0.07);
+    border: 1px solid rgba(0,255,213,0.15);
+    border-radius: 100px;
+    padding: 3px 10px;
+  }
+
+  /* ─── DASHBOARD PREVIEW ─── */
+  #dashboard {
+    padding: 100px 0;
+  }
+
+  .dashboard-wrap {
+    margin-top: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+  }
+
+  .dash-titlebar {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .dash-dots {
+    display: flex;
+    gap: 7px;
+  }
+
+  .dash-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+  }
+
+  .dash-dot-r { background: #ff5f57; }
+  .dash-dot-y { background: #febc2e; }
+  .dash-dot-g { background: #28c840; }
+
+  .dash-url {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    max-width: 300px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .dash-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+  }
+
+  .dash-sidebar {
+    background: var(--bg-deep);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+  }
+
+  .dash-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: default;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .dash-nav-item.active {
+    color: var(--accent-cyan);
+    background: rgba(0,180,255,0.06);
+    border-left-color: var(--accent-cyan);
+  }
+
+  .dash-nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .dash-main {
+    padding: 24px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+  }
+
+  .dash-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .dash-stat {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .dash-stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .dash-stat-value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .dash-stat-delta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    margin-top: 4px;
+  }
+
+  .delta-down { color: var(--accent-teal); }
+  .delta-up   { color: var(--accent-red); }
+
+  .dash-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .dash-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    overflow: hidden;
+  }
+
+  .dash-panel-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* SVG chart inside dashboard */
+  .mini-chart { width: 100%; height: 80px; }
+
+  .session-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .session-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+  }
+
+  .session-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .s-green { background: var(--accent-teal); box-shadow: 0 0 6px var(--accent-teal); }
+  .s-red   { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red); }
+  .s-amber { background: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
+
+  .session-user { font-size: 11px; color: var(--text-secondary); flex: 1; font-family: var(--font-mono); }
+  .session-score { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+  /* ─── CTA ─── */
+  #cta {
+    padding: 100px 0 120px;
+  }
+
+  .cta-inner {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .cta-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 300px;
+    background: radial-gradient(ellipse, rgba(0,180,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .cta-inner .section-title {
+    font-size: clamp(32px, 4vw, 50px);
+    margin-bottom: 20px;
+  }
+
+  .cta-inner .section-desc {
+    margin: 0 auto 40px;
+    text-align: center;
+    font-size: 17px;
+  }
+
+  .cta-form {
+    display: flex;
+    gap: 12px;
+    max-width: 440px;
+    margin: 0 auto 20px;
+  }
+
+  .cta-input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 13px 18px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .cta-input::placeholder { color: var(--text-muted); }
+  .cta-input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(0,180,255,0.12); }
+
+  .cta-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text-secondary); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  @keyframes floatTag {
+    from { transform: translateY(0px); }
+    to   { transform: translateY(-8px); }
+  }
+
+  @keyframes orbitDot1 {
+    from { transform: rotate(0deg) translateX(165px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(165px) rotate(-360deg); }
+  }
+
+  @keyframes orbitDot2 {
+    from { transform: rotate(90deg) translateX(135px) rotate(-90deg); }
+    to   { transform: rotate(450deg) translateX(135px) rotate(-450deg); }
+  }
+
+  @keyframes orbitDot3 {
+    from { transform: rotate(200deg) translateX(100px) rotate(-200deg); }
+    to   { transform: rotate(560deg) translateX(100px) rotate(-560deg); }
+  }
+
+  @keyframes chartDraw {
+    from { stroke-dashoffset: 600; }
+    to   { stroke-dashoffset: 0; }
+  }
+
+  .chart-line-anim {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: chartDraw 2.5s ease forwards 0.5s;
+  }
+
+  /* scroll fade-in */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── NEURAL CANVAS ─── -->
+<canvas id="neural-canvas"></canvas>
+<div class="canvas-overlay"></div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-mark"></div>
+    <span class="nav-logo-text">Incognoir</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#dashboard">Platform</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a class="btn-ghost" href="#">Log in</a>
+    <a class="btn-primary" href="#cta">Request Demo</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 1 · HERO                              -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          <span>AI Behavioral Cybersecurity</span>
+        </div>
+        <h1 class="hero-headline">
+          Detect the moment<br/><em>trust breaks</em><br/>inside a session.
+        </h1>
+        <p class="hero-sub">
+          Incognoir's behavioral AI models the neural signature of every user session — surfacing threats before breach occurs, without waiting for signatures or rules.
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary btn-lg" href="#cta">Request Demo</a>
+          <a class="btn-outline" href="#architecture">See Architecture</a>
+        </div>
+        <div class="hero-meta">
+          <div class="hero-meta-item">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 1l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/>
+            </svg>
+            <span>Zero-rule detection</span>
+          </div>
+          <div class="hero-meta-item">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>
+            </svg>
+            <span>Sub-second response</span>
+          </div>
+          <div class="hero-meta-item">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5 3V1M11 3V1"/>
+            </svg>
+            <span>Enterprise-ready API</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="brain-orb">
+          <div class="brain-orb-ring ring-1"></div>
+          <div class="brain-orb-ring ring-2"></div>
+          <div class="brain-orb-ring ring-3"></div>
+          <div class="brain-orb-core">
+            <!-- Brain SVG simplified -->
+            <svg class="brain-svg-wrap" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.9">
+                <!-- Brain lobes outline -->
+                <path d="M80 30 C60 20 35 25 30 50 C25 70 35 85 45 90 C40 100 42 115 55 120 C60 125 68 125 72 122 C74 130 78 135 80 135 C82 135 86 130 88 122 C92 125 100 125 105 120 C118 115 120 100 115 90 C125 85 135 70 130 50 C125 25 100 20 80 30Z" 
+                      stroke="rgba(0,180,255,0.5)" stroke-width="1.5" fill="rgba(0,180,255,0.04)"/>
+                <!-- Neural lines -->
+                <path d="M80 30 Q70 50 65 70 Q62 85 68 100" stroke="rgba(0,180,255,0.35)" stroke-width="1" fill="none"/>
+                <path d="M80 30 Q90 50 95 70 Q98 85 92 100" stroke="rgba(0,180,255,0.35)" stroke-width="1" fill="none"/>
+                <path d="M50 55 Q65 60 80 58 Q95 60 110 55" stroke="rgba(0,255,213,0.25)" stroke-width="1" fill="none"/>
+                <path d="M47 75 Q63 72 80 74 Q97 72 113 75" stroke="rgba(0,255,213,0.2)" stroke-width="1" fill="none"/>
+                <path d="M55 95 Q67 90 80 92 Q93 90 105 95" stroke="rgba(0,180,255,0.25)" stroke-width="1" fill="none"/>
+                <!-- Nodes -->
+                <circle cx="80" cy="58" r="3" fill="rgba(0,180,255,0.6)" filter="url(#glow)"/>
+                <circle cx="65" cy="70" r="2.5" fill="rgba(0,255,213,0.5)"/>
+                <circle cx="95" cy="70" r="2.5" fill="rgba(0,255,213,0.5)"/>
+                <circle cx="80" cy="92" r="3" fill="rgba(0,180,255,0.6)"/>
+                <circle cx="60" cy="85" r="2" fill="rgba(0,180,255,0.4)"/>
+                <circle cx="100" cy="85" r="2" fill="rgba(0,180,255,0.4)"/>
+                <!-- Alert node pulsing -->
+                <circle cx="80" cy="58" r="8" fill="none" stroke="rgba(0,180,255,0.2)" stroke-width="1">
+                  <animate attributeName="r" values="5;12;5" dur="3s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+              <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+            </svg>
+          </div>
+          <!-- Orbit dots -->
+          <div style="position:absolute;inset:0;border-radius:50%;pointer-events:none;">
+            <div class="orbit-dot orbit-dot-1"></div>
+          </div>
+          <!-- Threat tags -->
+          <div class="threat-tag threat-tag-1">SESSION_ANOMALY</div>
+          <div class="threat-tag threat-tag-2">TRUST_SCORE: 0.12</div>
+          <div class="threat-tag threat-tag-3">BASELINE_DELTA: +84%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 2 · PROBLEM                            -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="problem">
+  <div class="container">
+    <div class="problem-grid">
+      <div class="reveal">
+        <div class="section-label">The Problem</div>
+        <h2 class="section-title">Perimeter security<br/>can't see <em style="color:var(--accent-red);font-style:normal;">inside</em> a session.</h2>
+        <p class="section-desc" style="margin-top:16px;">
+          Authenticated users are invisible to traditional tools. Once inside, an attacker — or a compromised insider — operates freely. Incognoir watches behavior itself.
+        </p>
+
+        <div class="problem-cards" style="margin-top:36px;">
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 10v1"/>
+              </svg>
+            </div>
+            <div>
+              <div class="problem-card-title">Rules can't model humans</div>
+              <div class="problem-card-desc">Signature-based systems miss behavioral drift — gradual or sudden — by design.</div>
+            </div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 8h3l2-5 3 10 2-5h2"/>
+              </svg>
+            </div>
+            <div>
+              <div class="problem-card-title">Alerts arrive too late</div>
+              <div class="problem-card-desc">Mean detection time sits at 200+ days. Damage is done long before a SIEM fires.</div>
+            </div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M13 6V3H3v10h4M8 13l4-4 2 2"/>
+              </svg>
+            </div>
+            <div>
+              <div class="problem-card-title">Identity ≠ intent</div>
+              <div class="problem-card-desc">Credential validation confirms who — not what they're doing or why.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" style="transition-delay:0.15s">
+        <div class="trajectory-box">
+          <div class="trajectory-title">// Threat Trajectory Visualization</div>
+          <div class="threat-flow">
+            <div class="flow-step">
+              <div class="flow-dot flow-dot-normal">01</div>
+              <div>
+                <div class="flow-label">Normal Behavior</div>
+                <div class="flow-sub">Baseline established · low variance</div>
+              </div>
+              <span class="flow-badge badge-monitor">MONITOR</span>
+            </div>
+            <div class="flow-step">
+              <div class="flow-dot flow-dot-warn">02</div>
+              <div>
+                <div class="flow-label">Risk Spike Detected</div>
+                <div class="flow-sub">Navigation pattern deviation +84%</div>
+              </div>
+              <span class="flow-badge badge-up">↑ RISK</span>
+            </div>
+            <div class="flow-step">
+              <div class="flow-dot flow-dot-alert">03</div>
+              <div>
+                <div class="flow-label">Trust Break</div>
+                <div class="flow-sub">Behavioral fingerprint mismatch · 0.12</div>
+              </div>
+              <span class="flow-badge badge-break">ALERT</span>
+            </div>
+            <div class="flow-step">
+              <div class="flow-dot flow-dot-ok">04</div>
+              <div>
+                <div class="flow-label">Session Terminated</div>
+                <div class="flow-sub">Automated response · 340ms</div>
+              </div>
+              <span class="flow-badge badge-ok">RESOLVED</span>
+            </div>
+          </div>
+
+          <!-- mini sparkline -->
+          <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+            <svg width="100%" height="70" viewBox="0 0 400 70" preserveAspectRatio="none" fill="none">
+              <defs>
+                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(0,180,255,0.2)"/>
+                  <stop offset="100%" stop-color="rgba(0,180,255,0)"/>
+                </linearGradient>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#00b4ff"/>
+                  <stop offset="60%" stop-color="#ffb340"/>
+                  <stop offset="85%" stop-color="#ff3a5c"/>
+                  <stop offset="100%" stop-color="#00ffd5"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,55 Q40,52 80,50 Q100,49 120,46 Q140,43 160,35 Q180,25 200,15 Q215,8 230,5 Q245,8 260,20 Q290,40 320,55 Q360,62 400,60" 
+                    fill="url(#chartFill)" stroke="none" opacity="0.4"/>
+              <path d="M0,55 Q40,52 80,50 Q100,49 120,46 Q140,43 160,35 Q180,25 200,15 Q215,8 230,5 Q245,8 260,20 Q290,40 320,55 Q360,62 400,60"
+                    class="chart-line-anim" stroke="url(#lineGrad)" stroke-width="2" fill="none"/>
+              <circle cx="230" cy="5" r="4" fill="#ff3a5c"><animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/></circle>
+              <text x="232" y="3" font-size="8" fill="rgba(255,58,92,0.8)" font-family="monospace">TRUST BREAK</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 3 · ARCHITECTURE                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="architecture">
+  <div class="container">
+    <div class="arch-header reveal">
+      <div>
+        <div class="section-label">Architecture</div>
+        <h2 class="section-title">Built on<br/>behavioral DNA.</h2>
+      </div>
+      <p class="section-desc">
+        Three layers of AI working together — like an immune system — to profile, analyze, and respond to behavioral change in real time.
+      </p>
+    </div>
+
+    <div class="arch-grid reveal">
+      <div class="arch-cell">
+        <div class="arch-cell-num">01 / INGEST</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M3 5h14M3 10h14M3 15h8"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Signal Collection</div>
+        <div class="arch-cell-desc">Captures session telemetry — keystrokes, navigation, timing, resource access — with sub-millisecond precision.</div>
+      </div>
+      <div class="arch-cell">
+        <div class="arch-cell-num">02 / MODEL</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="10" cy="10" r="3"/>
+            <path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.2 4.2l2.1 2.1M13.7 13.7l2.1 2.1M4.2 15.8l2.1-2.1M13.7 6.3l2.1-2.1"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Behavioral Modeling</div>
+        <div class="arch-cell-desc">Unsupervised neural model builds a unique behavioral fingerprint per user. No labels. No rules. Pure inference.</div>
+      </div>
+      <div class="arch-cell">
+        <div class="arch-cell-num">03 / SCORE</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M2 14l5-5 4 3 7-9"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Trust Scoring</div>
+        <div class="arch-cell-desc">Continuous real-time score from 0.0–1.0. Falls when behavior diverges. Integrates with SIEM, SOAR, IAM in one API call.</div>
+      </div>
+      <div class="arch-cell">
+        <div class="arch-cell-num">04 / CONTEXT</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="3" y="3" width="6" height="6" rx="1"/>
+            <rect x="11" y="3" width="6" height="6" rx="1"/>
+            <rect x="3" y="11" width="6" height="6" rx="1"/>
+            <path d="M11 14h2M14 11v2"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Contextual Graph</div>
+        <div class="arch-cell-desc">Maps relationships across user entities, devices, and access paths — surfaces lateral movement patterns.</div>
+      </div>
+      <div class="arch-cell">
+        <div class="arch-cell-num">05 / RESPOND</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M10 2l2 6h6l-5 4 2 6-5-3-5 3 2-6-5-4h6z"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Automated Response</div>
+        <div class="arch-cell-desc">Configurable playbooks: re-authenticate, step-up MFA, terminate session, or alert SOC — within 340ms.</div>
+      </div>
+      <div class="arch-cell">
+        <div class="arch-cell-num">06 / LEARN</div>
+        <div class="arch-cell-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M10 4a6 6 0 100 12A6 6 0 0010 4z"/><path d="M10 8v4M8 10h4"/>
+          </svg>
+        </div>
+        <div class="arch-cell-title">Adaptive Learning</div>
+        <div class="arch-cell-desc">Baseline continuously refines. Role changes, shift patterns, seasonal behavior — all handled without manual tuning.</div>
+      </div>
+    </div>
+
+    <div class="arch-flow-bar reveal" style="transition-delay:0.2s">
+      <div class="arch-flow-step">
+        <div class="arch-flow-step-dot"></div>
+        <span class="arch-flow-step-text">Raw Session Signal</span>
+      </div>
+      <div class="arch-flow-step">
+        <div class="arch-flow-step-dot" style="background:var(--accent-teal);box-shadow:0 0 8px var(--accent-teal)"></div>
+        <span class="arch-flow-step-text">Behavioral Encoder</span>
+      </div>
+      <div class="arch-flow-step">
+        <div class="arch-flow-step-dot" style="background:var(--accent-amber);box-shadow:0 0 8px var(--accent-amber)"></div>
+        <span class="arch-flow-step-text">Anomaly Engine</span>
+      </div>
+      <div class="arch-flow-step">
+        <div class="arch-flow-step-dot" style="background:var(--accent-red);box-shadow:0 0 8px var(--accent-red)"></div>
+        <span class="arch-flow-step-text">Trust Decision</span>
+      </div>
+      <div class="arch-flow-step">
+        <div class="arch-flow-step-dot" style="background:var(--accent-teal);box-shadow:0 0 8px var(--accent-teal)"></div>
+        <span class="arch-flow-step-text">SIEM / SOAR / IAM</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 4 · CAPABILITIES                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="capabilities">
+  <div class="container">
+    <div class="cap-header reveal">
+      <div class="section-label">Core Capabilities</div>
+      <h2 class="section-title">The immune system<br/>for your enterprise.</h2>
+      <p class="section-desc" style="margin-top:14px;">
+        Six capabilities that work together to detect, analyze, and eliminate behavioral threats.
+      </p>
+    </div>
+
+    <div class="cap-grid reveal" style="transition-delay:0.1s">
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M10 2C6 2 3 5 3 8c0 3 2 5 5 6v2h4v-2c3-1 5-3 5-6 0-3-3-6-7-6z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">Insider Threat Detection</div>
+          <div class="cap-card-desc">Detects credential misuse, privilege escalation, and data exfiltration by modeling what legitimate behavior actually looks like.</div>
+          <div class="cap-card-tag">UBA · UEBA</div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M2 5l8-3 8 3v5c0 5-4 8-8 9-4-1-8-4-8-9V5z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">Account Takeover Prevention</div>
+          <div class="cap-card-desc">Valid credentials mean nothing if the behavioral fingerprint doesn't match. Sessions that deviate get flagged immediately.</div>
+          <div class="cap-card-tag">ATO · Session Security</div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="10" cy="10" r="7"/><path d="M7 10l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">Continuous Authentication</div>
+          <div class="cap-card-desc">Authentication isn't a gate — it's a living score. Every action updates trust in real time across every session, every user.</div>
+          <div class="cap-card-tag">Zero Trust · ZTNA</div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M2 10h3l2-5 4 9 2-4h5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">Fraud Signal API</div>
+          <div class="cap-card-desc">Expose trust scores directly to your application layer. Gate high-risk actions, trigger MFA, or deny transactions programmatically.</div>
+          <div class="cap-card-tag">API-First · REST · Webhooks</div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="2" y="4" width="16" height="12" rx="2"/><path d="M2 8h16M6 12h2M10 12h4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">SOC Intelligence Layer</div>
+          <div class="cap-card-desc">Push behavioral context — not raw events — directly into Splunk, Microsoft Sentinel, or any SIEM. Fewer alerts. Higher fidelity.</div>
+          <div class="cap-card-tag">SIEM · SOAR · XDR</div>
+        </div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-card-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4z"/><path d="M14 14h2M13 13l2-2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cap-card-title">Forensic Replay</div>
+          <div class="cap-card-desc">Reconstruct any session frame-by-frame. Understand exactly how trust degraded. Built for IR teams and compliance audits.</div>
+          <div class="cap-card-tag">DFI · Audit · Compliance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 5 · DASHBOARD PREVIEW                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="dashboard">
+  <div class="container">
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:end;margin-bottom:0">
+      <div>
+        <div class="section-label">Platform Preview</div>
+        <h2 class="section-title">Built for the<br/>analyst, not the vendor.</h2>
+      </div>
+      <p class="section-desc">
+        A single pane of glass for behavioral intelligence. Every session, every user, every trust score — live.
+      </p>
+    </div>
+
+    <div class="dashboard-wrap reveal" style="transition-delay:0.15s">
+      <div class="dash-titlebar">
+        <div class="dash-dots">
+          <div class="dash-dot dash-dot-r"></div>
+          <div class="dash-dot dash-dot-y"></div>
+          <div class="dash-dot dash-dot-g"></div>
+        </div>
+        <div class="dash-url">app.incognoir.ai — Behavioral Intelligence Platform</div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-sidebar">
+          <div class="dash-nav-item active">
+            <div class="dash-nav-dot"></div>Session Monitor
+          </div>
+          <div class="dash-nav-item">
+            <div class="dash-nav-dot"></div>Trust Scores
+          </div>
+          <div class="dash-nav-item">
+            <div class="dash-nav-dot"></div>Alert Queue
+          </div>
+          <div class="dash-nav-item">
+            <div class="dash-nav-dot"></div>Behavioral DNA
+          </div>
+          <div class="dash-nav-item">
+            <div class="dash-nav-dot"></div>Forensic Replay
+          </div>
+          <div class="dash-nav-item">
+            <div class="dash-nav-dot"></div>Integrations
+          </div>
+          <div class="dash-nav-item" style="margin-top:auto;">
+            <div class="dash-nav-dot"></div>Settings
+          </div>
+        </div>
+        <div class="dash-main">
+          <div class="dash-stats-row">
+            <div class="dash-stat">
+              <div class="dash-stat-label">Active Sessions</div>
+              <div class="dash-stat-value">2,841</div>
+              <div class="dash-stat-delta delta-down">↓ 3.1% from avg</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Alerts Today</div>
+              <div class="dash-stat-value" style="color:var(--accent-red)">14</div>
+              <div class="dash-stat-delta delta-up">↑ 2 new in 1h</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Avg Trust Score</div>
+              <div class="dash-stat-value" style="color:var(--accent-teal)">0.91</div>
+              <div class="dash-stat-delta delta-down">↑ healthy range</div>
+            </div>
+            <div class="dash-stat">
+              <div class="dash-stat-label">Response Time</div>
+              <div class="dash-stat-value">340<span style="font-size:13px;color:var(--text-muted)">ms</span></div>
+              <div class="dash-stat-delta delta-down">↓ 12ms from prev</div>
+            </div>
+          </div>
+
+          <div class="dash-panels">
+            <div class="dash-panel">
+              <div class="dash-panel-title">// Trust Score Trend — 24H</div>
+              <svg class="mini-chart" viewBox="0 0 300 80" fill="none" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(0,255,213,0.15)"/>
+                    <stop offset="100%" stop-color="rgba(0,255,213,0)"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,40 Q30,38 60,36 Q80,34 100,32 Q120,30 140,28 Q155,26 165,45 Q175,60 185,62 Q195,60 210,40 Q230,20 260,18 Q280,17 300,16"
+                      fill="url(#trendFill)" stroke="none" opacity="0.5"/>
+                <path d="M0,40 Q30,38 60,36 Q80,34 100,32 Q120,30 140,28 Q155,26 165,45 Q175,60 185,62 Q195,60 210,40 Q230,20 260,18 Q280,17 300,16"
+                      stroke="var(--accent-teal)" stroke-width="1.5" fill="none"/>
+                <circle cx="165" cy="45" r="3" fill="var(--accent-amber)"/>
+                <circle cx="185" cy="62" r="3" fill="var(--accent-red)"/>
+              </svg>
+            </div>
+            <div class="dash-panel">
+              <div class="dash-panel-title">// Live Session Alerts</div>
+              <div class="session-list">
+                <div class="session-item">
+                  <div class="session-dot s-red"></div>
+                  <span class="session-user">j.davidson@corp.io</span>
+                  <span class="session-score">0.12 · ATO</span>
+                </div>
+                <div class="session-item">
+                  <div class="session-dot s-amber"></div>
+                  <span class="session-user">m.okafor@corp.io</span>
+                  <span class="session-score">0.41 · PRIV</span>
+                </div>
+                <div class="session-item">
+                  <div class="session-dot s-amber"></div>
+                  <span class="session-user">svc_batch_proc</span>
+                  <span class="session-score">0.38 · EXFIL</span>
+                </div>
+                <div class="session-item">
+                  <div class="session-dot s-green"></div>
+                  <span class="session-user">a.chen@corp.io</span>
+                  <span class="session-score">0.94 · OK</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 6 · CTA                                -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="cta">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <div class="cta-glow"></div>
+      <div class="section-label" style="justify-content:center;"><span style="display:none"></span>Get Started</div>
+      <h2 class="section-title">
+        Stop assuming<br/><em style="background:linear-gradient(90deg,var(--accent-cyan),var(--accent-teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:normal;">your sessions are clean.</em>
+      </h2>
+      <p class="section-desc">
+        Deploy in under an hour. No rules to write. No signatures to maintain. Incognoir starts learning immediately.
+      </p>
+      <div class="cta-form">
+        <input class="cta-input" type="email" placeholder="you@company.com"/>
+        <a class="btn-primary btn-lg" href="#">Request Demo</a>
+      </div>
+      <p class="cta-note">No commitment required · Enterprise SLA available</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-copy">© 2025 Incognoir Inc. · AI Behavioral Cybersecurity</span>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Security</a>
+        <a href="#">Docs</a>
+        <a href="#">Status</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ─── NEURAL CANVAS ─── */
+const canvas = document.getElementById('neural-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, nodes = [], animId;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initNodes() {
+  nodes = [];
+  const count = Math.floor((W * H) / 14000);
+  for (let i = 0; i < count; i++) {
+    nodes.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 1.8 + 0.5,
+      // concentrate near top
+      pull: Math.random() > 0.7 ? 1 : 0
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const maxDist = 140;
+
+  // draw edges
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x;
+      const dy = nodes[i].y - nodes[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < maxDist) {
+        // fade with distance and y position (dimmer toward bottom)
+        const yFactor = 1 - Math.max(nodes[i].y, nodes[j].y) / H * 0.6;
+        const alpha = (1 - dist / maxDist) * 0.18 * yFactor;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(0,180,255,${alpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // draw nodes
+  nodes.forEach(n => {
+    const yFactor = 1 - n.y / H * 0.7;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,180,255,${0.35 * yFactor})`;
+    ctx.fill();
+  });
+}
+
+function update() {
+  nodes.forEach(n => {
+    n.x += n.vx;
+    n.y += n.vy;
+    if (n.x < 0 || n.x > W) n.vx *= -1;
+    if (n.y < 0 || n.y > H) n.vy *= -1;
+  });
+}
+
+function loop() {
+  update();
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+resize();
+initNodes();
+loop();
+window.addEventListener('resize', () => { resize(); initNodes(); });
+
+/* ─── SCROLL REVEAL ─── */
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
